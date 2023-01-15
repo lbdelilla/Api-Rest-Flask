@@ -46,12 +46,27 @@ def get_users():
 
     return jsonify(response_body), 200
 
+
 @app.route("/user/<int:id>", methods = ["GET"])
 def user_by_id(id):
     user = db.get_or_404(User, id)
     result = user.serialize()
     response_body = {"msg" : "ok",
                      "result": result }
+    return jsonify(response_body), 200
+
+
+@app.route('/user', methods=['POST'])
+def create_user():
+    body = json.loads(request.data)
+    user = User(email = body["email"], password= body["password"], is_active = True)
+    db.session.add(user)
+    db.session.commit()
+
+    response_body = {
+        "msg": " The new user has been created correctly "
+    }
+
     return jsonify(response_body), 200
 
 
@@ -73,13 +88,13 @@ def get_characters():
 
     response_body = {
         "msg": " This is the list of characters ",
-         "total_records": len(result),
-        "results" : charactersList
+         "total_records": len(charactersList),
+        "result" : charactersList
     }
 
     return jsonify(response_body), 200  
 
-@app.route("/characters/<int:id>")
+@app.route("/characters/<int:id>", methods=['GET'])
 def character_by_id(id):
     character = db.get_or_404(Characters, id)
     result = character.serialize()
@@ -87,19 +102,6 @@ def character_by_id(id):
                      "result": result }
     return jsonify(response_body), 200  
 
-
-@app.route('/user', methods=['POST'])
-def create_user():
-    body = json.loads(request.data)
-    user = User(email = body["email"], password= body["password"], is_active = True)
-    db.session.add(user)
-    db.session.commit()
-
-    response_body = {
-        "msg": " The new user has been created correctly "
-    }
-
-    return jsonify(response_body), 200
 
 @app.route('/characters', methods=['POST'])
 def create_characters():
@@ -114,10 +116,11 @@ def create_characters():
 
     return jsonify(response_body), 200 
 
+
 @app.route('/user/favorites-characters/<int:user_id>', methods=['GET'])
 def get_user_fav_char(user_id):
-    favorites = db.get_or_404(UserFavChar, user_id)
-    result = favorites.serialize()
+    favorites = UserFavChar.query.filter(UserFavChar.user_id == user_id).all()
+    result = [favorite.serialize() for favorite in favorites]
     response_body = {"msg" : "ok",
                      "total_records": len(result),
                      "result": result }
@@ -133,6 +136,7 @@ def create_user_fav_char():
     db.session.commit()
     return jsonify(request_body), 200
 
+
 @app.route('/favorites', methods=['GET'])
 def get_user_fav():
     favorites = UserFavChar.query.all() 
@@ -143,6 +147,7 @@ def get_user_fav():
                      "result": result }
 
     return jsonify(response_body), 200  
+
 
 @app.route("/user/favorites-characters/<int:user_id>", methods = ["DELETE"])
 def delete_user_fav(user_id):
