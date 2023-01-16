@@ -56,6 +56,20 @@ def user_by_id(id):
     return jsonify(response_body), 200
 
 
+@app.route("/user/<int:user_id>", methods=['PUT'])
+def update_user(user_id):
+    request_body = request.get_json()
+    user = User.query.get(user_id)
+    if user is None:
+       raise APIException('User not found', status_code=404)
+    if "email" in request_body:
+       user.email = request_body["email"]
+    db.session.commit()
+    response_body = {
+        'msg' : 'The user has been modify correctly'
+    }
+    return jsonify(response_body), 200
+
 @app.route('/user', methods=['POST'])
 def create_user():
     body = json.loads(request.data)
